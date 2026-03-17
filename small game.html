@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Will You Be Rich or Poor?</title>
+<style>
+body { font-family: Arial, sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+#quiz-container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 600px; text-align: center; }
+h2 { margin-bottom: 20px; }
+.option { background: #e0e0e0; margin: 10px 0; padding: 12px; border-radius: 8px; cursor: pointer; transition: 0.3s; }
+.option:hover { background: #d1ffd1; transform: scale(1.03); }
+.option.selected-good { background: #8cff7e; color: #fff; font-weight: bold; }
+.option.selected-bad { background: #ff6b6b; color: #fff; font-weight: bold; }
+#timer { font-weight: bold; margin-bottom: 10px; font-size: 1.2em; }
+#progress-container { background: #ddd; border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+#progress-bar { height: 20px; background: #8cff7e; width: 0%; transition: width 0.5s; }
+#score { margin-bottom: 20px; font-weight: bold; }
+#result { font-size: 1.3em; margin-top: 20px; color: #333; }
+</style>
+</head>
+<body>
+
+<div id="quiz-container">
+  <div id="timer">Time: 15</div>
+  <div id="progress-container"><div id="progress-bar"></div></div>
+  <div id="score">Score: 0</div>
+  <h2 id="question">Question will appear here</h2>
+  <div id="options"></div>
+  <div id="result"></div>
+</div>
+
+<audio id="sound-good">
+  <source src="https://freesound.org/data/previews/341/341695_3248244-lq.mp3" type="audio/mpeg">
+</audio>
+<audio id="sound-bad">
+  <source src="https://freesound.org/data/previews/256/256113_3263906-lq.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+const questions = [
+{ question: "You find $50 on the street. What do you do?", options: [
+  { text: "Hide it under your mattress like a true Belarusian savings expert", score: 2 },
+  { text: "Spend it all on potato pancakes 🍽️", score: -2 },
+  { text: "Invest in a tiny startup making souvenirs from BelAZ trucks", score: 2 },
+  { text: "Donate some and buy a lottery ticket for the rest", score: 1 }
+]},
+{ question: "Your friend invites you to start a small business. You…", options: [
+  { text: "Create a detailed plan and launch like a pro", score: 2 },
+  { text: "Decline politely because nap time is more important 🛌", score: -2 },
+  { text: "Try selling homemade kvass online", score: 1 },
+  { text: "Invest just enough to feel involved but do nothing", score: 0 }
+]},
+{ question: "You have free time on a weekend. You…", options: [
+  { text: "Read a book about successful Belarusian entrepreneurs 📚", score: 2 },
+  { text: "Play video games and ignore life responsibilities", score: -2 },
+  { text: "Walk around Minsk and look for inspiration", score: 1 },
+  { text: "Mix learning and fun: podcast + homemade borscht 🍲", score: 2 }
+]},
+{ question: "You receive your first paycheck. You…", options: [
+  { text: "Save some, invest some, treat yourself a little", score: 2 },
+  { text: "Spend it all on clothes and gadgets", score: -2 },
+  { text: "Hide it in an old sock", score: -1 },
+  { text: "Share it with friends and feel rich together", score: 1 }
+]},
+{ question: "A friend suggests an online course to improve skills. You…", options: [
+  { text: "Enroll and complete it with flying colors", score: 2 },
+  { text: "Bookmark it 'for later' and forget forever", score: -2 },
+  { text: "Watch a few videos and pretend you learned", score: 0 },
+  { text: "Use the tips to make your own Belarusian startup", score: 2 }
+]},
+{ question: "You inherit a small sum of money. You…", options: [
+  { text: "Invest in a business or stocks", score: 2 },
+  { text: "Spend it on fancy chocolates 🍫", score: -2 },
+  { text: "Buy a miniature BelAZ model", score: 1 },
+  { text: "Donate most and feel morally rich", score: 1 }
+]},
+{ question: "A supermarket offers a 50% discount. You…", options: [
+  { text: "Buy only what you need and save", score: 2 },
+  { text: "Stockpile everything even if unnecessary", score: -2 },
+  { text: "Ignore it, discounts are too tempting", score: 0 },
+  { text: "Buy some and give a friend as a prank gift 🎁", score: 1 }
+]},
+{ question: "You see an opportunity to start a YouTube channel. You…", options: [
+  { text: "Plan content and launch immediately", score: 2 },
+  { text: "Scroll past because it's too much effort", score: -2 },
+  { text: "Film random clips of your cat 🐱", score: 0 },
+  { text: "Collaborate with friends and brainstorm ideas", score: 1 }
+]},
+{ question: "A friend borrows money from you. You…", options: [
+  { text: "Keep track and expect repayment", score: 2 },
+  { text: "Forget about it and eat ice cream 🍦", score: -2 },
+  { text: "Give a tiny amount as gift", score: 0 },
+  { text: "Offer advice along with lending", score: 1 }
+]},
+{ question: "You dream about a luxurious lifestyle. You…", options: [
+  { text: "Set goals and plan steps carefully", score: 2 },
+  { text: "Hope luck will magically bring it", score: -2 },
+  { text: "Plan a little, nap a lot 😴", score: 0 },
+  { text: "Focus on skills and side projects", score: 2 }
+]},
+{ question: "You want to buy a new gadget. You…", options: [
+  { text: "Compare prices and wait for discounts", score: 2 },
+  { text: "Buy immediately without thinking", score: -2 },
+  { text: "Borrow one from a friend to test", score: 1 },
+  { text: "Save for a month and enjoy the anticipation", score: 2 }
+]},
+{ question: "A magical lottery appears. You…", options: [
+  { text: "Buy a ticket but continue working", score: 2 },
+  { text: "Rely entirely on winning it", score: -2 },
+  { text: "Donate the ticket for good karma", score: 1 },
+  { text: "Use it as motivation to start a project", score: 2 }
+]},
+{ question: "You are offered to invest in a startup. You…", options: [
+  { text: "Research thoroughly and invest wisely", score: 2 },
+  { text: "Ignore it because it seems risky", score: -2 },
+  { text: "Invest a small amount just for fun", score: 1 },
+  { text: "Partner with friends and share the work", score: 2 }
+]},
+{ question: "You find a creative idea for a mobile app. You…", options: [
+  { text: "Develop it seriously and launch", score: 2 },
+  { text: "Ignore it thinking 'too hard'", score: -2 },
+  { text: "Share it online just for fun", score: 0 },
+  { text: "Collaborate with friends to improve it", score: 1 }
+]},
+{ question: "You receive unexpected money. You…", options: [
+  { text: "Invest in skills or business", score: 2 },
+  { text: "Spend on short-term pleasures", score: -2 },
+  { text: "Save for emergencies", score: 2 },
+  { text: "Give some to friends and feel generous", score: 1 }
+]}
+];
+
+let currentQuestion = 0;
+let totalScore = 0;
+let timer;
+let timeLeft = 20;
+
+function showQuestion() {
+  timeLeft = 20;
+  document.getElementById('timer').textContent = "Time: " + timeLeft;
+  document.getElementById('result').textContent = "";
+  const q = questions[currentQuestion];
+  document.getElementById('question').textContent = q.question;
+  const optionsDiv = document.getElementById('options');
+  optionsDiv.innerHTML = "";
+  q.options.forEach((opt,index)=>{
+    const div = document.createElement('div');
+    div.className="option";
+    div.textContent=opt.text;
+    div.onclick=()=>selectOption(index);
+    optionsDiv.appendChild(div);
+  });
+  updateProgress();
+  updateScore();
+  startTimer();
+}
+
+function selectOption(index){
+  stopTimer();
+  const q=questions[currentQuestion];
+  totalScore+=q.options[index].score;
+  updateScore();
+  const optionDivs=document.querySelectorAll('.option');
+  optionDivs.forEach((div,i)=>{
+    div.style.pointerEvents="none";
+    if(i===index){
+      if(q.options[i].score>=1){div.classList.add('selected-good');document.getElementById('sound-good').play();}
+      else if(q.options[i].score<=-1){div.classList.add('selected-bad');document.getElementById('sound-bad').play();}
+      else {div.style.background="#f0f0f0";}
+    }
+  });
+  setTimeout(nextQuestion,1000);
+}
+
+function startTimer(){
+  timer=setInterval(()=>{
+    timeLeft--;
+    document.getElementById('timer').textContent="Time: "+timeLeft;
+    if(timeLeft<=0){stopTimer();nextQuestion();}
+  },1000);
+}
+
+function stopTimer(){clearInterval(timer);}
+function nextQuestion(){currentQuestion++;if(currentQuestion<questions.length){showQuestion();}else{showResult();}}
+function updateProgress(){document.getElementById('progress-bar').style.width=((currentQuestion)/questions.length)*100+"%";}
+function updateScore(){document.getElementById('score').textContent="Score: "+totalScore;}
+
+function showResult(){
+  let resultText="";
+  if(totalScore>=20) resultText="💰 Wow! You’ll be richer than a Belarusian millionaire with a fleet of BelAZ trucks! 🚛";
+  else if(totalScore>=10) resultText="🤔 Not bad! You might have enough coins for extra potato pancakes 🥞";
+  else if(totalScore>=0) resultText="😅 Meh… your wallet is like empty kvass bottles 🍶";
+  else resultText="😂 Oh no! You’ll probably negotiate with squirrels for nuts 🌰";
+  document.getElementById('question').textContent="Quiz Completed!";
+  document.getElementById('options').innerHTML="";
+  document.getElementById('progress-bar').style.width="100%";
+  document.getElementById('result').textContent=resultText;
+}
+
+showQuestion();
+</script>
+</body>
+</html>
